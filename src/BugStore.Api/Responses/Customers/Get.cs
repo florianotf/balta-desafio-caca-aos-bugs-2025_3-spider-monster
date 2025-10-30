@@ -1,6 +1,7 @@
-namespace BugStore.Responses.Customers;
+namespace BugStore.Api.Responses.Customers;
 
-public class Get
+public class GetCustomerResponse
 {
-    
+    public IEnumerable<Models.Customer> Customers { get; set; }
+
 }

@@ -1,6 +1,8 @@
-namespace BugStore.Responses.Orders;
+namespace BugStore.Api.Responses.Orders;
 
-public class GetById
+public class GetByIdOrderResponse
 {
-    
+    public Guid Id { get; set; }
+    public Guid CustomerId { get; set; }
+    public DateTime OrderDate { get; set; }
 }

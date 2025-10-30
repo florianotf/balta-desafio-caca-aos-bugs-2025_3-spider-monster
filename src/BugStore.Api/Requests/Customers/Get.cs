@@ -1,6 +1,6 @@
-namespace BugStore.Requests.Customers;
+namespace BugStore.Api.Requests.Customers;
 
-public class Get
+public class GetCustomerRequest
 {
-    
+
 }

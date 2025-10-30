@@ -1,6 +1,7 @@
-namespace BugStore.Responses.Products;
+namespace BugStore.Api.Responses.Products;
 
-public class Get
+public class GetProductResponse
 {
-    
+    public IEnumerable<Models.Product> Products { get; set; } = null!;
+
 }

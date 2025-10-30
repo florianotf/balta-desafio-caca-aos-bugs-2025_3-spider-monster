@@ -1,6 +1,7 @@
-namespace BugStore.Responses.Products;
+namespace BugStore.Api.Responses.Products;
 
-public class Delete
+public class DeleteProductResponse
 {
-    
+    public Guid Id { get; set; }
+    public DateTime DeletedAt { get; set; }
 }

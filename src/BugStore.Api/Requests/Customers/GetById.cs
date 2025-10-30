@@ -1,6 +1,6 @@
-namespace BugStore.Requests.Customers;
+namespace BugStore.Api.Requests.Customers;
 
-public class GetById
+public class GetByIdCustomerRequest
 {
-    
+    public Guid Id { get; set; }
 }
