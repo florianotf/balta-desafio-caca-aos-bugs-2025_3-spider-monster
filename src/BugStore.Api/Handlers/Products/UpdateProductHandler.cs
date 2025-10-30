@@ -15,6 +15,15 @@ public class UpdateProductHandler : IUpdateProductHandler
 
     public UpdateProductResponse Handle(UpdateProductRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request.Title))
+            throw new ArgumentException("Product title is required.");
+        if (request.Price <= 0)
+            throw new ArgumentException("Product price must be greater than zero.");
+        if (string.IsNullOrWhiteSpace(request.Slug))
+            throw new ArgumentException("Product slug is required.");
+        if (string.IsNullOrWhiteSpace(request.Description))
+            throw new ArgumentException("Product description is required.");
+
         var product = _context.Products.Find(request.ProductId);
         if (product == null)
         {

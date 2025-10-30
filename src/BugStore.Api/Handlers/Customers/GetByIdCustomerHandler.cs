@@ -15,7 +15,8 @@ public class GetByIdCustomerHandler : IGetByIdCustomerHandler
 
     public GetByIdCustomerResponse Handle(GetByIdCustomerRequest request)
     {
-        var result = _context.Customers.Find(request.Id);
+        var result = _context.Customers.Find(request.Id) ??
+            throw new InvalidOperationException("Customer not found");
 
         return new GetByIdCustomerResponse
         {

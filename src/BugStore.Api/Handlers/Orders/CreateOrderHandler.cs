@@ -16,7 +16,7 @@ public class CreateOrderHandler : ICreateOrderHandler
 
     public CreateOrderResponse Handle(CreateOrderRequest request)
     {
-        var order = new Models.Order
+        var order = new Order
         {
             Id = Guid.NewGuid(),
             CustomerId = request.CustomerId,
@@ -24,6 +24,21 @@ public class CreateOrderHandler : ICreateOrderHandler
             UpdatedAt = DateTime.UtcNow,
             Lines = request.Lines ?? new List<OrderLine>()
         };
+
+        if (order.Lines.Count == 0)
+        {
+            throw new ArgumentException("Order must have at least one order line.");
+        }
+
+        if (!_context.Customers.Any(c => c.Id == order.CustomerId))
+        {
+            throw new KeyNotFoundException($"Customer with Id {order.CustomerId} not found.");
+        }
+
+        if (order.Lines.Any(ol => !_context.Products.Any(p => p.Id == ol.ProductId)))
+        {
+            throw new KeyNotFoundException("One or more products in the order lines were not found.");
+        }
 
         var result = _context.Orders.Add(order);
         _context.SaveChanges();

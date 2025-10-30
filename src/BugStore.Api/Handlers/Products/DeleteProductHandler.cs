@@ -15,11 +15,10 @@ public class DeleteProductHandler : IDeleteProductHandler
 
     public DeleteProductResponse Handle(DeleteProductRequest request)
     {
-        var result = _context.Products.Remove(new Models.Product
-        {
-            Id = request.ProductId
-        });
+        var existingProduct = _context.Products.Find(request.ProductId)
+            ?? throw new KeyNotFoundException("Product not found.");
 
+        _context.Products.Remove(existingProduct);
         _context.SaveChanges();
 
         return new DeleteProductResponse

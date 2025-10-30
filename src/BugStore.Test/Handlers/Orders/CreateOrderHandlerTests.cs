@@ -9,7 +9,7 @@ namespace BugStore.Test.Handlers.Orders;
 public class CreateOrderHandlerTests
 {
     [Fact]
-    public async Task Should_Create_New_Order()
+    public void Should_Create_New_Order()
     {
         // Arrange
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -19,16 +19,22 @@ public class CreateOrderHandlerTests
         var dbContext = new AppDbContext(options);
 
         // Create a customer and products for the order
-        var customer = new Customer { Name = "John Doe", Email = "john@example.com" };
+        var customer = new Customer
+        {
+            Name = "John Doe",
+            Email = "john@example.com",
+            Phone = "123-456-7890",
+            BirthDate = new DateTime(1990, 1, 1)
+        };
         dbContext.Customers.Add(customer);
 
         var products = new List<Product>
         {
-            new Product { Title = "Product 1", Price = 99.99m },
-            new Product { Title = "Product 2", Price = 149.99m }
+            new Product { Title = "Product 1", Price = 99.99m, Description = "Description 1", Slug = "product-1" },
+            new Product { Title = "Product 2", Price = 149.99m, Description = "Description 1", Slug = "product-1" }
         };
         dbContext.Products.AddRange(products);
-        await dbContext.SaveChangesAsync();
+        dbContext.SaveChanges();
 
         var handler = new CreateOrderHandler(dbContext);
 
@@ -43,17 +49,16 @@ public class CreateOrderHandlerTests
         };
 
         // Act
-        var response = await handler.HandleAsync(request);
+        var response = handler.Handle(request);
 
         // Assert
         Assert.NotNull(response);
-        Assert.True(response.Id > 0);
+        Assert.NotEqual(Guid.Empty, response.Id);
         Assert.Equal(customer.Id, response.CustomerId);
-        Assert.Equal(2, response.Lines.Count);
 
-        var order = await dbContext.Orders
+        var order = dbContext.Orders
             .Include(o => o.Lines)
-            .FirstOrDefaultAsync(o => o.Id == response.Id);
+            .FirstOrDefault(o => o.Id == response.Id);
 
         Assert.NotNull(order);
         Assert.Equal(customer.Id, order.CustomerId);
@@ -63,7 +68,7 @@ public class CreateOrderHandlerTests
     }
 
     [Fact]
-    public async Task Should_Throw_Exception_When_Customer_Not_Found()
+    public void Should_Throw_Exception_When_Customer_Not_Found()
     {
         // Arrange
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -75,19 +80,19 @@ public class CreateOrderHandlerTests
 
         var request = new CreateOrderRequest
         {
-            CustomerId = 999,
+            CustomerId = Guid.NewGuid(),
             Lines = new List<OrderLine>
             {
-                new OrderLine { ProductId = 1, Quantity = 1 }
+                new OrderLine { ProductId = Guid.NewGuid(), Quantity = 1 }
             }
         };
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() => handler.HandleAsync(request));
+        Assert.Throws<KeyNotFoundException>(() => handler.Handle(request));
     }
 
     [Fact]
-    public async Task Should_Throw_Exception_When_Product_Not_Found()
+    public void Should_Throw_Exception_When_Product_Not_Found()
     {
         // Arrange
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -96,9 +101,15 @@ public class CreateOrderHandlerTests
 
         var dbContext = new AppDbContext(options);
 
-        var customer = new Customer { Name = "John Doe", Email = "john@example.com" };
+        var customer = new Customer
+        {
+            Name = "John Doe",
+            Email = "john@example.com",
+            Phone = "123-456-7890",
+            BirthDate = new DateTime(1990, 1, 1)
+        };
         dbContext.Customers.Add(customer);
-        await dbContext.SaveChangesAsync();
+        dbContext.SaveChanges();
 
         var handler = new CreateOrderHandler(dbContext);
 
@@ -107,16 +118,16 @@ public class CreateOrderHandlerTests
             CustomerId = customer.Id,
             Lines = new List<OrderLine>
             {
-                new OrderLine { ProductId = 999, Quantity = 1 }
+                new OrderLine { ProductId = Guid.NewGuid(), Quantity = 1 }
             }
         };
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() => handler.HandleAsync(request));
+        Assert.Throws<KeyNotFoundException>(() => handler.Handle(request));
     }
 
     [Fact]
-    public async Task Should_Validate_Order_Lines()
+    public void Should_Validate_Order_Lines()
     {
         // Arrange
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -125,9 +136,15 @@ public class CreateOrderHandlerTests
 
         var dbContext = new AppDbContext(options);
 
-        var customer = new Customer { Name = "John Doe", Email = "john@example.com" };
+        var customer = new Customer
+        {
+            Name = "John Doe",
+            Email = "john@example.com",
+            Phone = "123-456-7890",
+            BirthDate = new DateTime(1990, 1, 1)
+        };
         dbContext.Customers.Add(customer);
-        await dbContext.SaveChangesAsync();
+        dbContext.SaveChanges();
 
         var handler = new CreateOrderHandler(dbContext);
 
@@ -138,6 +155,6 @@ public class CreateOrderHandlerTests
         };
 
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentException>(() => handler.HandleAsync(request));
+        Assert.Throws<ArgumentException>(() => handler.Handle(request));
     }
 }

@@ -9,7 +9,7 @@ namespace BugStore.Test.Handlers.Customers;
 public class GetByIdCustomerHandlerTests
 {
     [Fact]
-    public async Task Should_Return_Customer_By_Id()
+    public void Should_Return_Customer_By_Id()
     {
         // Arrange
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -18,9 +18,15 @@ public class GetByIdCustomerHandlerTests
 
         var dbContext = new AppDbContext(options);
 
-        var customer = new Customer { Name = "John Doe", Email = "john@example.com" };
+        var customer = new Customer
+        {
+            Name = "John Doe",
+            Email = "john@example.com",
+            Phone = "123-456-7890",
+            BirthDate = new DateTime(1990, 1, 1)
+        };
         dbContext.Customers.Add(customer);
-        await dbContext.SaveChangesAsync();
+        dbContext.SaveChanges();
 
         var handler = new GetByIdCustomerHandler(dbContext);
 
@@ -30,7 +36,7 @@ public class GetByIdCustomerHandlerTests
         };
 
         // Act
-        var response = await handler.HandleAsync(request);
+        var response = handler.Handle(request);
 
         // Assert
         Assert.NotNull(response);
@@ -40,7 +46,7 @@ public class GetByIdCustomerHandlerTests
     }
 
     [Fact]
-    public async Task Should_Throw_Exception_When_Customer_Not_Found()
+    public void Should_Throw_Exception_When_Customer_Not_Found()
     {
         // Arrange
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -52,10 +58,10 @@ public class GetByIdCustomerHandlerTests
 
         var request = new GetByIdCustomerRequest
         {
-            Id = 999
+            Id = Guid.NewGuid()
         };
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() => handler.HandleAsync(request));
+        Assert.Throws<InvalidOperationException>(() => handler.Handle(request));
     }
 }

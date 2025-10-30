@@ -9,7 +9,7 @@ namespace BugStore.Test.Handlers.Customers;
 public class UpdateCustomerHandlerTests
 {
     [Fact]
-    public async Task Should_Update_Existing_Customer()
+    public void Should_Update_Existing_Customer()
     {
         // Arrange
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -18,9 +18,15 @@ public class UpdateCustomerHandlerTests
 
         var dbContext = new AppDbContext(options);
 
-        var customer = new Customer { Name = "John Doe", Email = "john@example.com" };
+        var customer = new Customer
+        {
+            Name = "John Doe",
+            Email = "john@example.com",
+            Phone = "123-456-7890",
+            BirthDate = new DateTime(1990, 1, 1)
+        };
         dbContext.Customers.Add(customer);
-        await dbContext.SaveChangesAsync();
+        dbContext.SaveChanges();
 
         var handler = new UpdateCustomerHandler(dbContext);
 
@@ -28,11 +34,13 @@ public class UpdateCustomerHandlerTests
         {
             Id = customer.Id,
             Name = "John Updated",
-            Email = "john.updated@example.com"
+            Email = "john.updated@example.com",
+            Phone = "987-654-3210",
+            BirthDate = new DateTime(1991, 2, 2)
         };
 
         // Act
-        var response = await handler.HandleAsync(request);
+        var response = handler.Handle(request);
 
         // Assert
         Assert.NotNull(response);
@@ -40,14 +48,14 @@ public class UpdateCustomerHandlerTests
         Assert.Equal(request.Name, response.Name);
         Assert.Equal(request.Email, response.Email);
 
-        var updatedCustomer = await dbContext.Customers.FindAsync(response.Id);
+        var updatedCustomer = dbContext.Customers.Find(response.Id);
         Assert.NotNull(updatedCustomer);
         Assert.Equal(request.Name, updatedCustomer.Name);
         Assert.Equal(request.Email, updatedCustomer.Email);
     }
 
     [Fact]
-    public async Task Should_Throw_Exception_When_Customer_Not_Found()
+    public void Should_Throw_Exception_When_Customer_Not_Found()
     {
         // Arrange
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -59,21 +67,24 @@ public class UpdateCustomerHandlerTests
 
         var request = new UpdateCustomerRequest
         {
-            Id = 999,
+            Id = Guid.NewGuid(),
             Name = "John Updated",
-            Email = "john.updated@example.com"
+            Email = "john.updated@example.com",
+            Phone = "987-654-3210",
+            BirthDate = new DateTime(1991, 2, 2)
         };
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() => handler.HandleAsync(request));
+        Assert.Throws<KeyNotFoundException>(() => handler.Handle(request));
     }
 
     [Theory]
-    [InlineData("", "john@example.com")]
-    [InlineData("John Doe", "")]
-    [InlineData(null, "john@example.com")]
-    [InlineData("John Doe", null)]
-    public async Task Should_Validate_Required_Fields(string name, string email)
+    [InlineData("", "john@example.com", "123-456-7890", "1990-01-01")]
+    [InlineData("John Doe", "", "123-456-7890", "1990-01-01")]
+    [InlineData("John Doe", "john@example.com", "", "1990-01-01")]
+    [InlineData("John Doe", "john@example.com", "123-456-7890", null)]
+    public void Should_Validate_Required_Fields(
+        string name, string email, string phone, DateTime birthDate)
     {
         // Arrange
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -81,16 +92,29 @@ public class UpdateCustomerHandlerTests
             .Options;
 
         var dbContext = new AppDbContext(options);
+
+        var customer = new Customer
+        {
+            Name = name,
+            Email = email,
+            Phone = phone,
+            BirthDate = birthDate
+        };
+        dbContext.Customers.Add(customer);
+        dbContext.SaveChanges();
+
         var handler = new UpdateCustomerHandler(dbContext);
 
         var request = new UpdateCustomerRequest
         {
-            Id = 1,
+            Id = customer.Id,
             Name = name,
-            Email = email
+            Email = email,
+            Phone = phone,
+            BirthDate = birthDate
         };
 
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentException>(() => handler.HandleAsync(request));
+        Assert.Throws<ArgumentException>(() => handler.Handle(request));
     }
 }

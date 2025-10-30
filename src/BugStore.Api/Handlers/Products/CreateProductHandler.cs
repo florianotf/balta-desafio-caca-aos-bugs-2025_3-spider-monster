@@ -15,6 +15,14 @@ public class CreateProductHandler : ICreateProductHandler
 
     public CreateProductResponse Handle(CreateProductRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request.Title))
+            throw new ArgumentException("Product title is required.");
+        if (request.Price <= 0)
+            throw new ArgumentException("Product price must be greater than zero.");
+        if (string.IsNullOrWhiteSpace(request.Slug))
+            throw new ArgumentException("Product slug is required.");
+        if (string.IsNullOrWhiteSpace(request.Description))
+            throw new ArgumentException("Product description is required.");
         var result = _context.Products.Add(new Models.Product
         {
             Id = Guid.NewGuid(),

@@ -9,7 +9,7 @@ namespace BugStore.Test.Handlers.Products;
 public class DeleteProductHandlerTests
 {
     [Fact]
-    public async Task Should_Delete_Existing_Product()
+    public void Should_Delete_Existing_Product()
     {
         // Arrange
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -18,30 +18,36 @@ public class DeleteProductHandlerTests
 
         var dbContext = new AppDbContext(options);
 
-        var product = new Product { Title = "Test Product", Price = 99.99m };
+        var product = new Product
+        {
+            Title = "Test Product",
+            Price = 99.99m,
+            Description = "This is a test product",
+            Slug = "test-product"
+        };
         dbContext.Products.Add(product);
-        await dbContext.SaveChangesAsync();
+        dbContext.SaveChanges();
 
         var handler = new DeleteProductHandler(dbContext);
 
         var request = new DeleteProductRequest
         {
-            Id = product.Id
+            ProductId = product.Id
         };
 
         // Act
-        var response = await handler.HandleAsync(request);
+        var response = handler.Handle(request);
 
         // Assert
         Assert.NotNull(response);
-        Assert.Equal(request.Id, response.Id);
+        Assert.Equal(request.ProductId, response.Id);
 
-        var deletedProduct = await dbContext.Products.FindAsync(request.Id);
+        var deletedProduct = dbContext.Products.Find(request.ProductId);
         Assert.Null(deletedProduct);
     }
 
     [Fact]
-    public async Task Should_Throw_Exception_When_Product_Not_Found()
+    public void Should_Throw_Exception_When_Product_Not_Found()
     {
         // Arrange
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -53,10 +59,10 @@ public class DeleteProductHandlerTests
 
         var request = new DeleteProductRequest
         {
-            Id = 999
+            ProductId = Guid.NewGuid()
         };
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() => handler.HandleAsync(request));
+        Assert.Throws<KeyNotFoundException>(() => handler.Handle(request));
     }
 }

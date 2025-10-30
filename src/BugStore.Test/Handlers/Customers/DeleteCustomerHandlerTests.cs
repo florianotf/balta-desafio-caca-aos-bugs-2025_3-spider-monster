@@ -9,7 +9,7 @@ namespace BugStore.Test.Handlers.Customers;
 public class DeleteCustomerHandlerTests
 {
     [Fact]
-    public async Task Should_Delete_Existing_Customer()
+    public void Should_Delete_Existing_Customer()
     {
         // Arrange
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -18,9 +18,15 @@ public class DeleteCustomerHandlerTests
 
         var dbContext = new AppDbContext(options);
 
-        var customer = new Customer { Name = "John Doe", Email = "john@example.com" };
+        var customer = new Customer
+        {
+            Name = "John Doe",
+            Email = "john@example.com",
+            Phone = "123-456-7890",
+            BirthDate = new DateTime(1990, 1, 1)
+        };
         dbContext.Customers.Add(customer);
-        await dbContext.SaveChangesAsync();
+        dbContext.SaveChanges();
 
         var handler = new DeleteCustomerHandler(dbContext);
 
@@ -30,18 +36,18 @@ public class DeleteCustomerHandlerTests
         };
 
         // Act
-        var response = await handler.HandleAsync(request);
+        var response = handler.Handle(request);
 
         // Assert
         Assert.NotNull(response);
         Assert.Equal(request.Id, response.Id);
 
-        var deletedCustomer = await dbContext.Customers.FindAsync(request.Id);
+        var deletedCustomer = dbContext.Customers.Find(request.Id);
         Assert.Null(deletedCustomer);
     }
 
     [Fact]
-    public async Task Should_Throw_Exception_When_Customer_Not_Found()
+    public void Should_Throw_Exception_When_Customer_Not_Found()
     {
         // Arrange
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -53,10 +59,10 @@ public class DeleteCustomerHandlerTests
 
         var request = new DeleteCustomerRequest
         {
-            Id = 999
+            Id = Guid.NewGuid()
         };
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() => handler.HandleAsync(request));
+        Assert.Throws<InvalidOperationException>(() => handler.Handle(request));
     }
 }

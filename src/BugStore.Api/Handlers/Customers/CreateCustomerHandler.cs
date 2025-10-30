@@ -15,6 +15,15 @@ public class CreateCustomerHandler : ICreateCustomerHandler
 
     public CreateCustomerResponse Handle(CreateCustomerRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request.Name))
+            throw new ArgumentException("Name is required.", nameof(request.Name));
+        if (string.IsNullOrWhiteSpace(request.Email))
+            throw new ArgumentException("Email is required.", nameof(request.Email));
+        if (string.IsNullOrWhiteSpace(request.Phone))
+            throw new ArgumentException("Phone is required.", nameof(request.Phone));
+        if (request.BirthDate == null)
+            throw new ArgumentException("BirthDate is required.", nameof(request.BirthDate));
+
         var result = _context.Customers.Add(new Models.Customer
         {
             Id = Guid.NewGuid(),

@@ -9,7 +9,7 @@ namespace BugStore.Test.Handlers.Customers;
 public class CreateCustomerHandlerTests
 {
     [Fact]
-    public async Task Should_Create_New_Customer()
+    public void Should_Create_New_Customer()
     {
         // Arrange
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -22,30 +22,32 @@ public class CreateCustomerHandlerTests
         var request = new CreateCustomerRequest
         {
             Name = "John Doe",
-            Email = "john@example.com"
+            Email = "john@example.com",
+            Phone = "123-456-7890",
+            BirthDate = new DateTime(1990, 1, 1)
         };
 
         // Act
-        var response = await handler.HandleAsync(request);
+        var response = handler.Handle(request);
 
         // Assert
         Assert.NotNull(response);
-        Assert.True(response.Id > 0);
+        Assert.NotEqual(Guid.Empty, response.Id);
         Assert.Equal(request.Name, response.Name);
         Assert.Equal(request.Email, response.Email);
 
-        var customer = await dbContext.Customers.FindAsync(response.Id);
+        var customer = dbContext.Customers.Find(response.Id);
         Assert.NotNull(customer);
         Assert.Equal(request.Name, customer.Name);
         Assert.Equal(request.Email, customer.Email);
     }
 
     [Theory]
-    [InlineData("", "john@example.com")]
-    [InlineData("John Doe", "")]
-    [InlineData(null, "john@example.com")]
-    [InlineData("John Doe", null)]
-    public async Task Should_Validate_Required_Fields(string name, string email)
+    [InlineData("", "john@example.com", "123-456-7890", null)]
+    [InlineData("John Doe", "", null, "1990-01-01")]
+    [InlineData(null, "john@example.com", "123-456-7890", "1990-01-01")]
+    [InlineData("John Doe", null, "123-456-7890", "1990-01-01")]
+    public void Should_Validate_Required_Fields(string name, string email, string phone, DateTime birthDate)
     {
         // Arrange
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -58,10 +60,12 @@ public class CreateCustomerHandlerTests
         var request = new CreateCustomerRequest
         {
             Name = name,
-            Email = email
+            Email = email,
+            Phone = phone,
+            BirthDate = birthDate
         };
 
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentException>(() => handler.HandleAsync(request));
+        Assert.Throws<ArgumentException>(() => handler.Handle(request));
     }
 }

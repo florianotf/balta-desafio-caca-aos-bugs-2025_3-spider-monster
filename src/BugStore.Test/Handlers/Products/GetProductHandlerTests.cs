@@ -9,7 +9,7 @@ namespace BugStore.Test.Handlers.Products;
 public class GetProductHandlerTests
 {
     [Fact]
-    public async Task Should_Return_All_Products()
+    public void Should_Return_All_Products()
     {
         // Arrange
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -20,30 +20,30 @@ public class GetProductHandlerTests
 
         var products = new List<Product>
         {
-            new Product { Title = "Product 1", Price = 99.99m },
-            new Product { Title = "Product 2", Price = 149.99m },
-            new Product { Title = "Product 3", Price = 199.99m }
+            new Product { Title = "Product 1", Price = 99.99m, Description = "This is a test product", Slug = "test-product" },
+            new Product { Title = "Product 2", Price = 149.99m, Description = "This is a test product", Slug = "test-product" },
+            new Product { Title = "Product 3", Price = 199.99m, Description = "This is a test product", Slug = "test-product" }
         };
 
         dbContext.Products.AddRange(products);
-        await dbContext.SaveChangesAsync();
+        dbContext.SaveChanges();
 
         var handler = new GetProductHandler(dbContext);
         var request = new GetProductRequest();
 
         // Act
-        var response = await handler.HandleAsync(request);
+        var response = handler.Handle();
 
         // Assert
         Assert.NotNull(response);
-        Assert.Equal(3, response.Products.Count);
+        Assert.Equal(3, response.Products.Count());
         Assert.Contains(response.Products, p => p.Title == "Product 1" && p.Price == 99.99m);
         Assert.Contains(response.Products, p => p.Title == "Product 2" && p.Price == 149.99m);
         Assert.Contains(response.Products, p => p.Title == "Product 3" && p.Price == 199.99m);
     }
 
     [Fact]
-    public async Task Should_Return_Empty_List_When_No_Products()
+    public void Should_Return_Empty_List_When_No_Products()
     {
         // Arrange
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -55,7 +55,7 @@ public class GetProductHandlerTests
         var request = new GetProductRequest();
 
         // Act
-        var response = await handler.HandleAsync(request);
+        var response = handler.Handle();
 
         // Assert
         Assert.NotNull(response);

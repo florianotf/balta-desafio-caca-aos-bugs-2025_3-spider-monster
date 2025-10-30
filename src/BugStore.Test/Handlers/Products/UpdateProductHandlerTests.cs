@@ -9,7 +9,7 @@ namespace BugStore.Test.Handlers.Products;
 public class UpdateProductHandlerTests
 {
     [Fact]
-    public async Task Should_Update_Existing_Product()
+    public void Should_Update_Existing_Product()
     {
         // Arrange
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -18,9 +18,9 @@ public class UpdateProductHandlerTests
 
         var dbContext = new AppDbContext(options);
 
-        var product = new Product { Title = "Test Product", Price = 99.99m };
+        var product = new Product { Title = "Test Product", Price = 99.99m, Description = "This is a test product", Slug = "test-product" };
         dbContext.Products.Add(product);
-        await dbContext.SaveChangesAsync();
+        dbContext.SaveChanges();
 
         var handler = new UpdateProductHandler(dbContext);
 
@@ -28,26 +28,28 @@ public class UpdateProductHandlerTests
         {
             ProductId = product.Id,
             Title = "Updated Product",
-            Price = 149.99m
+            Price = 149.99m,
+            Description = "This is an updated test product",
+            Slug = "updated-test-product"
         };
 
         // Act
-        var response = await handler.HandleAsync(request);
+        var response = handler.Handle(request);
 
         // Assert
         Assert.NotNull(response);
-        Assert.Equal(request.Id, response.Id);
+        Assert.Equal(request.ProductId, response.Id);
         Assert.Equal(request.Title, response.Title);
         Assert.Equal(request.Price, response.Price);
 
-        var updatedProduct = await dbContext.Products.FindAsync(response.Id);
+        var updatedProduct = dbContext.Products.Find(response.Id);
         Assert.NotNull(updatedProduct);
         Assert.Equal(request.Title, updatedProduct.Title);
         Assert.Equal(request.Price, updatedProduct.Price);
     }
 
     [Fact]
-    public async Task Should_Throw_Exception_When_Product_Not_Found()
+    public void Should_Throw_Exception_When_Product_Not_Found()
     {
         // Arrange
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -59,20 +61,21 @@ public class UpdateProductHandlerTests
 
         var request = new UpdateProductRequest
         {
-            Id = 999,
+            ProductId = Guid.NewGuid(),
             Title = "Updated Product",
-            Price = 149.99m
+            Price = 149.99m,
+            Description = "This is an updated test product",
+            Slug = "updated-test-product"
         };
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() => handler.HandleAsync(request));
+        Assert.Throws<KeyNotFoundException>(() => handler.Handle(request));
     }
 
     [Theory]
     [InlineData("", 99.99)]
     [InlineData("Updated Product", -1)]
-    [InlineData(null, 99.99)]
-    public async Task Should_Validate_Required_Fields(string title, decimal price)
+    public void Should_Validate_Required_Fields(string title, decimal price)
     {
         // Arrange
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -84,12 +87,12 @@ public class UpdateProductHandlerTests
 
         var request = new UpdateProductRequest
         {
-            Id = 1,
+            ProductId = Guid.NewGuid(),
             Title = title,
             Price = price
         };
 
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentException>(() => handler.HandleAsync(request));
+        Assert.Throws<ArgumentException>(() => handler.Handle(request));
     }
 }

@@ -21,6 +21,14 @@ public class UpdateCustomerHandler : IUpdateCustomerHandler
             throw new KeyNotFoundException($"Customer with Id {request.Id} not found.");
         }
 
+        if (string.IsNullOrWhiteSpace(request.Name) ||
+            string.IsNullOrWhiteSpace(request.Email) ||
+            string.IsNullOrWhiteSpace(request.Phone) ||
+            request.BirthDate == default)
+        {
+            throw new ArgumentException("Name, Email, Phone, and BirthDate are required fields.");
+        }
+
         customer.Name = request.Name;
         customer.Email = request.Email;
         customer.Phone = request.Phone;

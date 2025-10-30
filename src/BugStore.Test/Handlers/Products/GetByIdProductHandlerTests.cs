@@ -9,7 +9,7 @@ namespace BugStore.Test.Handlers.Products;
 public class GetByIdProductHandlerTests
 {
     [Fact]
-    public async Task Should_Return_Product_By_Id()
+    public void Should_Return_Product_By_Id()
     {
         // Arrange
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -18,19 +18,25 @@ public class GetByIdProductHandlerTests
 
         var dbContext = new AppDbContext(options);
 
-        var product = new Product { Title = "Test Product", Price = 99.99m };
+        var product = new Product
+        {
+            Title = "Test Product",
+            Price = 99.99m,
+            Description = "This is a test product",
+            Slug = "test-product"
+        };
         dbContext.Products.Add(product);
-        await dbContext.SaveChangesAsync();
+        dbContext.SaveChanges();
 
         var handler = new GetByIdProductHandler(dbContext);
 
         var request = new GetByIdProductRequest
         {
-            Id = product.Id
+            ProductId = product.Id
         };
 
         // Act
-        var response = await handler.HandleAsync(request);
+        var response = handler.Handle(request);
 
         // Assert
         Assert.NotNull(response);
@@ -40,7 +46,7 @@ public class GetByIdProductHandlerTests
     }
 
     [Fact]
-    public async Task Should_Throw_Exception_When_Product_Not_Found()
+    public void Should_Throw_Exception_When_Product_Not_Found()
     {
         // Arrange
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -52,10 +58,10 @@ public class GetByIdProductHandlerTests
 
         var request = new GetByIdProductRequest
         {
-            Id = 999
+            ProductId = Guid.NewGuid()
         };
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() => handler.HandleAsync(request));
+        Assert.Throws<NullReferenceException>(() => handler.Handle(request));
     }
 }

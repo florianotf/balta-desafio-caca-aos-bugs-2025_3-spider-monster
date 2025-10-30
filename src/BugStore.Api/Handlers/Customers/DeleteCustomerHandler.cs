@@ -15,11 +15,10 @@ public class DeleteCustomerHandler : IDeleteCustomerHandler
 
     public DeleteCustomerResponse Handle(DeleteCustomerRequest request)
     {
-        var result = _context.Customers.Remove(new Models.Customer
-        {
-            Id = request.Id
-        });
+        var customer = _context.Customers.Find(request.Id)
+        ?? throw new InvalidOperationException("Customer not found");
 
+        _context.Customers.Remove(customer);
         _context.SaveChanges();
 
         return new DeleteCustomerResponse

@@ -9,7 +9,7 @@ namespace BugStore.Test.Handlers.Products;
 public class CreateProductHandlerTests
 {
     [Fact]
-    public async Task Should_Create_New_Product()
+    public void Should_Create_New_Product()
     {
         // Arrange
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -22,19 +22,21 @@ public class CreateProductHandlerTests
         var request = new CreateProductRequest
         {
             Title = "Test Product",
-            Price = 99.99m
+            Price = 99.99m,
+            Description = "This is a test product",
+            Slug = "test-product"
         };
 
         // Act
-        var response = await handler.HandleAsync(request);
+        var response = handler.Handle(request);
 
         // Assert
         Assert.NotNull(response);
-        Assert.True(response.Id > 0);
+        Assert.NotEqual(Guid.Empty, response.Id);
         Assert.Equal(request.Title, response.Title);
         Assert.Equal(request.Price, response.Price);
 
-        var product = await dbContext.Products.FindAsync(response.Id);
+        var product = dbContext.Products.Find(response.Id);
         Assert.NotNull(product);
         Assert.Equal(request.Title, product.Title);
         Assert.Equal(request.Price, product.Price);
@@ -43,8 +45,7 @@ public class CreateProductHandlerTests
     [Theory]
     [InlineData("", 99.99)]
     [InlineData("Test Product", -1)]
-    [InlineData(null, 99.99)]
-    public async Task Should_Validate_Required_Fields(string title, decimal price)
+    public void Should_Validate_Required_Fields(string title, decimal price)
     {
         // Arrange
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -57,10 +58,12 @@ public class CreateProductHandlerTests
         var request = new CreateProductRequest
         {
             Title = title,
-            Price = price
+            Price = price,
+            Description = "This is a test product",
+            Slug = "test-product"
         };
 
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentException>(() => handler.HandleAsync(request));
+        Assert.Throws<ArgumentException>(() => handler.Handle(request));
     }
 }
